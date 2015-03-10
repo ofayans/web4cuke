@@ -1,0 +1,26 @@
+:login:
+  :pages:
+    - 'login_page'
+  :final_checkpoints:
+    :a:
+      :type: a
+      :selector:
+        :href: "/app/account"
+
+:login_page:
+  :url: '/app/login'
+  :sleep: 1
+  :commit:
+    :type: input
+    :selector:
+      :class: 'create'
+  :expected_fields:
+    :login:
+      :type: textfield
+      :selector:
+        :id: 'web_user_rhlogin'
+    :password:
+      :type: textfield
+      :selector:
+        :id: 'web_user_password'
+
