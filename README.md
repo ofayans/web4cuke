@@ -74,3 +74,67 @@ end
 
 ```
 From now on you will have @web, an instance of Web4Cuke class with a bunch of convenient methods for high-level interactions with the browser, and, a browser running by default in the headless mode. For development and debugging purposes, however I recommend setting DEBUG_WEB environmental variable to *true* so that you will be presented with a visible browser window.
+
+- Once this preparation is done, let's try to understand how to write yaml files. The key concept web4cuke is built around is an *action*. 
+Action is any set of user actions you want to automate, it could be web search, form submissions, data upload etc. An action is described in a yaml file with the following structure:
+
+```
+action_name:
+  pages:
+    - 'first_page'
+    - 'second_page'
+  final_checkpoints:
+    alert_success:
+      selector:
+        text: 'You have successfully performed whatever you intended'
+
+first_page:
+  url: '/some_relative_path/testme'
+  expected_fields:
+     field_one_on_page_one:
+       type: textfield
+       selector:
+         id: 'i-am-field-1'
+     field_two_on_page_one:
+       type: textfield
+       selector:
+         class: 'generic-field-2-class'
+  checkpoints:
+    sometext:
+      selector:
+        text: 'I am text one on page one'
+    someothertext:
+      selector:
+        text: 'I am text two on page one'
+  commit:
+    selector:
+      text: 'Click me'
+
+second_page:
+  sleep 2 # wait 2 seconds till the page is loaded
+  expected_fields:
+    field_one_on_page_two:
+      type: filefield
+      selector:
+        id: 'upload-something'
+    field_two_on_page_two:
+      type: textfield
+      selector:
+        xpath '//*[@id="fancy_something"]/span'
+      def_value: 'If you dont pass :field_two_on_page_two value, this text will go there'
+  checkpoints:
+    sometext:
+      selector:
+        text: 'I am text one on page two'
+    someothertext:
+      selector:
+        text: 'I am text two on page two'
+  commit:
+    scroll: true # sometimes the element you need is outside the area of the virtual viewport so webdriver is unable to interact with it. Use this keyword to execute a simple javascript *scroll_into_view* function
+    selector:
+      text: 'Click me too'
+
+***
+
+
+``` 

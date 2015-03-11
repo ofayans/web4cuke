@@ -6,4 +6,4 @@ gem 'web4cuke'
 gem 'rspec-expectations'
 gem 'debugger'
 gem 'headless'
-
+gem 'pry'
