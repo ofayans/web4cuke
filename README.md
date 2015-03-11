@@ -48,3 +48,29 @@ code for low-level browser interaction. Instead you describe your pages and
 actions to be performed in Web UI of your product in simple yaml-formatted
 files. This approach allows you to separate the application data (html
 properties of page elements) from test logic. 
+
+How to use this? 
+
+- Add `gem 'web4cuke'` to you Gemfile and run `bundle install`
+- In your project in one of your lib/*.rb files add `require "web4cuke"` and inherit your own class from Web4Cuke one, like this:
+```
+class Web < Web4Cuke
+  def initialize(options)
+  super(options)
+  # Add here some code specific to your project, like 
+  # @@logged_in = false
+end
+```
+
+- In your features/support/env.rb in Before hook instatiate your beautiful class:
+```
+  options = {
+    :base_url => "http://base_url_of_your_project",
+    :browser => :firefox, # or :chrome. Other browsers are not supported yet
+    :rules_path => "path_to_the_folder_with_your_yaml_files",
+    :logger => @logger # You need to pass an object that will do the logging for you. I believe you have it implemented. If not, please take a look in the examples/testproject folder.
+  }
+  @web = Web.new(options)
+
+```
+From now on you will have @web, an instance of Web4Cuke class with a bunch of convenient methods for high-level interactions with the browser, and, a browser running by default in the headless mode. For development and debugging purposes, however I recommend setting DEBUG_WEB environmental variable to *true* so that you will be presented with a visible browser window.
