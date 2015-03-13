@@ -153,7 +153,7 @@ When I run my beautiful action with:
   |option                |value           |
   |field_one_on_page_one |some text       |
   |field_two_on_page_one | some other text|
-  |field_one_on_page_two| lib/files/myfile| 
+  |field_one_on_page_two | lib/files/myfile| 
   # We remember that field_one_on_page_two is a filefield
   # And we leave default value for second field on the page two.
 ```
@@ -167,7 +167,7 @@ When /^I run my beautiful action with:$/ do |table|
   @result = @web.run_action(:our_test_action, options)
 end
 ```
-
+As you can see, field_names declared in the yaml files, like *field_one_on_page_one* are used as keys in the hash, passed to the *@web.run_action* method as the second parameter. First parameter being the name of the action also declared in the yaml file.
 If you then inspect the @result object then ideally you would get something like this:
 ```
 pp @result
@@ -178,3 +178,7 @@ pp @result
 
 ```
 If something went wrong and the webdriver was unable to find some checkpoints or other fields described in the yaml file, then the @result[:result] would be changed to *false* and @result[:failed_positive_checkpoints] array will be populated with the elements that were not found, @result[:failed_negative_checkpoints] - with elements you described in *negative_checkpoints* and @result[:errors] - with exception messages. Also, a *screenshots* folder will be created in your working directory, containing browser screenshot of the page that caught an error.
+
+Now we have to master yaml file creation in details.
+The structure of yaml files supported by web4cuke library is quite flexible. You could store page descriptions deparately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution.
+ 
