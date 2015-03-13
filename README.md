@@ -68,7 +68,9 @@ end
     :base_url => "http://base_url_of_your_project",
     :browser => :firefox, # or :chrome. Other browsers are not supported yet
     :rules_path => "path_to_the_folder_with_your_yaml_files",
-    :logger => @logger # You need to pass an object that will do the logging for you. I believe you have it implemented. If not, please take a look in the examples/testproject folder.
+    :logger => @logger 
+    # You need to pass an object that will do the logging for you. I believe you have it implemented.
+    # If not, please take a look in the examples/testproject folder.
   }
   @web = Web.new(options)
 
@@ -79,7 +81,7 @@ From now on you will have @web, an instance of Web4Cuke class with a bunch of co
 Action is any set of user actions you want to automate, it could be web search, form submissions, data upload etc. An action is described in a yaml file with the following structure:
 
 ```
-action_name:
+our_test_action:
   pages:
     - 'first_page'
     - 'second_page'
@@ -129,12 +131,50 @@ second_page:
     someothertext:
       selector:
         text: 'I am text two on page two'
+  negative_checkpoints:
+    error_message:
+      selector:
+        text: 'I am a critical error message! Wish you never see me on this page!'
   commit:
-    scroll: true # sometimes the element you need is outside the area of the virtual viewport so webdriver is unable to interact with it. Use this keyword to execute a simple javascript *scroll_into_view* function
+    scroll: true 
+    # sometimes the element you need is outside the area of the virtual viewport
+    # so webdriver is unable to interact with it. Use this keyword to execute a simple 
+    # javascript *scroll_into_view* function
     selector:
       text: 'Click me too'
-
-***
-
-
 ``` 
+If you take a closer look at this yaml structure, you'll notice that it describes describes two web pages pages. The first one is accessed through relative url "/some_relative_path/testme" that is being appended to your project's base_url (used during Web initialization).
+The second page is accessed by clicking the "Click me" button on the first page. The yaml file describes 2 textfields on first page and one textfield and one filefield on the second page. It also describes checkpoints - elements whose presence will be asserted during the action execution. We can provide default values for textfields right inside the yaml with the *def_value* keyword. Now the most interesting question: how do we use that?
+
+- The whole workflow would look like this. You would create your step:
+
+```
+When I run my beautiful action with:
+  |option                |value           |
+  |field_one_on_page_one |some text       |
+  |field_two_on_page_one | some other text|
+  |field_one_on_page_two| lib/files/myfile| 
+  # We remember that field_one_on_page_two is a filefield
+  # And we leave default value for second field on the page two.
+```
+Then you would write your step definition:
+```
+When /^I run my beautiful action with:$/ do |table|
+  options = {}
+  table.rows.each do |row|
+    options[row[0].to_sym] = row[1]
+  end
+  @result = @web.run_action(:our_test_action, options)
+end
+```
+
+If you then inspect the @result object then ideally you would get something like this:
+```
+pp @result
+{:result=>true,
+ :failed_positive_checkpoints=>[],
+ :failed_negative_checkpoints=>[],
+ :errors=>[]}
+
+```
+If something went wrong and the webdriver was unable to find some checkpoints or other fields described in the yaml file, then the @result[:result] would be changed to *false* and @result[:failed_positive_checkpoints] array will be populated with the elements that were not found, @result[:failed_negative_checkpoints] - with elements you described in *negative_checkpoints* and @result[:errors] - with exception messages. Also, a *screenshots* folder will be created in your working directory, containing browser screenshot of the page that caught an error.
