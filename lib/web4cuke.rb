@@ -127,6 +127,23 @@ class Web4Cuke
       @@logger.warn("No pages defined in the #{key} action")
     end
     action_rules[:pages].each { |page|
+      # sometimes you need to stop the execution at some point to test whether
+      # partial form data gets into the database, for example. In this case you
+      # can provide :stop_at key with the name of the page for a value and the
+      # action will be aborted once it gets into this page
+      if options.has_key?(:stop_at) and options[:stop_at] == page
+        @result[:result] = false
+        @result[:errors] << "Execution stopped at page #{page}"
+        return @result
+      end
+      # sometimes also it is pretty handy to be able to stick the debugger at
+      # some point to have a human control over the webdriver instance. Then
+      # in the same way stick the :debug_at keyword with the page name as a value 
+      # into the options hash. The webdriver is available via @@b clas variable
+      if options.has_key?(:debug_at) and options[:stop_at] == page
+        require "byebug"
+        byebug
+      end
       page_rules = rules[page.to_sym]
       unless page_rules
         @@logger.warn("The page #{page} not found in #{key} yaml file, maybe you have wrong yaml format...")
