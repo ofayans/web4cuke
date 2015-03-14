@@ -180,5 +180,71 @@ pp @result
 If something went wrong and the webdriver was unable to find some checkpoints or other fields described in the yaml file, then the @result[:result] would be changed to *false* and @result[:failed_positive_checkpoints] array will be populated with the elements that were not found, @result[:failed_negative_checkpoints] - with elements you described in *negative_checkpoints* and @result[:errors] - with exception messages. Also, a *screenshots* folder will be created in your working directory, containing browser screenshot of the page that caught an error.
 
 Now we have to master yaml file creation in details.
-The structure of yaml files supported by web4cuke library is quite flexible. You could store page descriptions deparately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution.
- 
+The structure of yaml files supported by web4cuke library is quite flexible. You could store page descriptions separately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution. Besides list of pages only one keyword is supported under an action:
+*final_checkpoints*. This is a list of elements whose presence we expect once the action is finished.
+
+The key part of an *action* is a *page*. The following keywords can be used under the page description:
+1. expected_fields 
+2. checkpoints
+3. negative_checkpoints
+4. links
+5. base_url
+6. url
+7. sleep
+8. commit
+
+- *expected_fields* is a section where field descriptions go. Field structure will be discussed in more details later.
+- *checkpoints*, as was mentioned above, is a list of named web elements you expect to be present on a web page.
+- *negative_checkpoints*  similarly a list of named elements you do not expect on a page.
+- *links* Is a list of links on a page that need to be checked in a web crawler kind of way. For each link you specify the selector by which the link can be accessed and a number of checkpoints (web elements) you wish to check on a page accesible via that particular link. A typycal link section of a page would look like this:
+```
+  :links:
+    :getstarted:
+      :selector:
+        :text: "Get Started"
+      :checkpoints:
+        :getstarted:
+          :selector:
+            :text: "Getting Started"
+    :securitypolicy:
+      :selector:
+        :text: "Security Policy"
+      :checkpoints:
+        :securityinformation:
+          :selector:
+            :text: "Security Information"
+```
+In this example webdriver would click first on a link with test "Get Started", check that the page has an element with text "Get Started", then get back, click on the link with text "Security Policy", check that the page has an element with text "Security Information", then again get back.  
+- *base_url* - needed when you need to perform some action on a third-party software (for integration cases for example)
+- *url* - a relative url path of the page (base_url for your project is passed to the Web4Cuke class during instance initialization)
+You can have a variable part of relative url, embraced between angle brackets. For example, if you have "/blog/<blogtype>/new" url in your yaml file and then pass {:blogtype=>'public'} in your options to the @web.run_action method, the webdriver will access the /blog/public/new relative url. 
+- *sleep* - a sleep interval in seconds, how long to wait before doing anything on this page: useful for slow loading pages
+- *commit* - well this is a commit button - the one you normally click to submit a form. The only tricky part about commit comes when the page presents you with a javascript popup. In this case the commit section would look like this:
+```
+commit:
+  type: alert
+```
+that's it!
+
+The last thing needed to be mentioned is the structure of the *field* itself. The *field* is mapped to a key in *options* passed to the @web.run_action method through it's name. That means, you pass a text to the particular textfield in the following way:
+1. Describe the field in the yaml file
+```
+expected_fields:
+  login:
+    type: 'textfield'
+    selector:
+      id: 'user-login'
+```
+2. pass the value:
+
+```@web.run_action(:some_action_name, {:login=>'username@example.com', <...other_options_go_here...>})```
+That's it.
+Different elemet types get treated differently by webdriver, textfields can not be clicked the way buttons do, so you need to provide element type. The following types are supported:
+- select - a dropdown list. You need to pass the element value
+- checkbox - self-explanatory
+- radio - same here
+- textfield - you can provide a text that will be inputted in this textfield
+- textarea - self-explanatory
+- filefield - provide a full path to the file you would upload here
+- a  -link
+- element any element that can be simply clicked. No need to provide the type in this case, it will be implied by default.
