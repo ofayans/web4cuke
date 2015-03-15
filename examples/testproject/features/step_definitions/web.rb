@@ -12,3 +12,12 @@ Then /^the url should contain "(.*?)"$/ do |urlpart|
   
 end
 
+When /^I run my beautiful action with:$/ do |table|
+  options = {}
+  table.rows.each do |row|
+    options[row[0].to_sym] = row[1]
+  end
+  @result = @web.run_action(:our_test_action, options)
+end
+
+

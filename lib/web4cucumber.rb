@@ -16,7 +16,7 @@
 require 'watir-webdriver'
 require 'headless'
 
-class Web4Cuke
+class Web4Cucumber
   def positive_checkpoint_lookup(checkpoints, result, options=nil)
     # checkpoints should be a hash
     checkpoints.each_pair { |key, value|

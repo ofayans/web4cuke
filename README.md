@@ -51,10 +51,10 @@ properties of page elements) from test logic.
 
 How to use this? 
 
-- Add `gem 'web4cuke'` to you Gemfile and run `bundle install`
-- In your project in one of your lib/*.rb files add `require "web4cuke"` and inherit your own class from Web4Cuke one, like this:
+- Add `gem 'Web4Cucumber'` to you Gemfile and run `bundle install`
+- In your project in one of your lib/*.rb files add `require "Web4Cucumber"` and inherit your own class from Web4Cucumber one, like this:
 ```
-class Web < Web4Cuke
+class Web < Web4Cucumber
   def initialize(options)
   super(options)
   # Add here some code specific to your project, like 
@@ -75,9 +75,9 @@ end
   @web = Web.new(options)
 
 ```
-From now on you will have @web, an instance of Web4Cuke class with a bunch of convenient methods for high-level interactions with the browser, and, a browser running by default in the headless mode. For development and debugging purposes, however I recommend setting DEBUG_WEB environmental variable to *true* so that you will be presented with a visible browser window.
+From now on you will have @web, an instance of Web4Cucumber class with a bunch of convenient methods for high-level interactions with the browser, and, a browser running by default in the headless mode. For development and debugging purposes, however I recommend setting DEBUG_WEB environmental variable to *true* so that you will be presented with a visible browser window.
 
-- Once this preparation is done, let's try to understand how to write yaml files. The key concept web4cuke is built around is an *action*. 
+- Once this preparation is done, let's try to understand how to write yaml files. The key concept Web4Cucumber is built around is an *action*. 
 Action is any set of user actions you want to automate, it could be web search, form submissions, data upload etc. An action is described in a yaml file with the following structure:
 
 ```
@@ -180,7 +180,7 @@ pp @result
 If something went wrong and the webdriver was unable to find some checkpoints or other fields described in the yaml file, then the @result[:result] would be changed to *false* and @result[:failed_positive_checkpoints] array will be populated with the elements that were not found, @result[:failed_negative_checkpoints] - with elements you described in *negative_checkpoints* and @result[:errors] - with exception messages. Also, a *screenshots* folder will be created in your working directory, containing browser screenshot of the page that caught an error.
 
 Now we have to master yaml file creation in details.
-The structure of yaml files supported by web4cuke library is quite flexible. You could store page descriptions separately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution. Besides list of pages only one keyword is supported under an action:
+The structure of yaml files supported by Web4Cucumber library is quite flexible. You could store page descriptions separately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution. Besides list of pages only one keyword is supported under an action:
 *final_checkpoints*. This is a list of elements whose presence we expect once the action is finished.
 
 The key part of an *action* is a *page*. The following keywords can be used under the page description:
@@ -216,7 +216,7 @@ The key part of an *action* is a *page*. The following keywords can be used unde
 ```
 In this example webdriver would click first on a link with test "Get Started", check that the page has an element with text "Get Started", then get back, click on the link with text "Security Policy", check that the page has an element with text "Security Information", then again get back.  
 - *base_url* - needed when you need to perform some action on a third-party software (for integration cases for example)
-- *url* - a relative url path of the page (base_url for your project is passed to the Web4Cuke class during instance initialization)
+- *url* - a relative url path of the page (base_url for your project is passed to the Web4Cucumber class during instance initialization)
 You can have a variable part of relative url, embraced between angle brackets. For example, if you have "/blog/<blogtype>/new" url in your yaml file and then pass {:blogtype=>'public'} in your options to the @web.run_action method, the webdriver will access the /blog/public/new relative url. 
 - *sleep* - a sleep interval in seconds, how long to wait before doing anything on this page: useful for slow loading pages
 - *commit* - well this is a commit button - the one you normally click to submit a form. The only tricky part about commit comes when the page presents you with a javascript popup. In this case the commit section would look like this:

@@ -1,6 +1,6 @@
-require "web4cuke"
+require "web4cucumber"
 
-class Web < Web4Cuke
+class Web < Web4Cucumber
   def initialize(options)
     super(options)
     @@logged_in = false
