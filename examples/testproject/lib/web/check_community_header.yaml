@@ -1,0 +1,117 @@
+:check_community_header:
+  :pages:
+    - "check_community_header_page"
+:check_community_header_page:
+  :url: '/community'
+
+  :checkpoints:
+    :products:
+      :selector:
+        :text: "Products"
+    :getinvolved:
+      :selector:
+        :text: "Get Involved"
+    :devcenter:
+      :selector:
+        :text: "Developer Center"
+    :support:
+      :selector:
+        :text: "Support"
+    :partners:
+      :selector:
+        :text: "Partners"
+    :community:
+      :selector:
+        :text: "Community"
+    :connect:
+      :selector:
+        :text: "Connect"
+    :about:
+      :selector:
+        :text: "About"
+    :getstarted:
+      :selector:
+        :text: "Get Started"
+    :status:
+      :selector:
+        :text: "Status"
+    :stackoverflow:
+      :selector:
+        :text: "Stack Overflow"
+    :premiumplans:
+      :selector:
+        :text: "Premium Plans"
+    :events:
+      :selector:
+        :text: "Events"
+    :blog:
+      :selector:
+        :text: "Blog"
+    :securitypolicy:
+      :selector:
+        :text: "Security Policy"
+    :openshiftonirc:
+      :selector:
+        :text: "#openshift on IRC"
+    :newslettersignup:
+      :selector:
+        :text: "Join our Newsletter"
+    :careers:
+      :selector:
+        :text: "Careers"
+    :aboutredhat:
+      :selector:
+        :text: "About Red Hat"
+    :partnerprograms:
+      :selector:
+        :text: "Partner Programs"
+    :contactus:
+      :selector:
+        :text: "Contact Us"
+    :enterprisesalesinfo:
+      :selector:
+        :text: "Enterprise Sales Info"
+  :links:
+    :getstarted:
+      :selector:
+        :text: "Get Started"
+      :checkpoints:
+        :getstartedwithopenshift:
+          :selector:
+            :text: "Getting Started with OpenShift"
+    :securitypolicy:
+      :selector:
+        :text: "Security Policy"
+      :checkpoints:
+        :securityinformation:
+          :selector:
+            :text: "Security Information"
+    :blog:
+      :selector:
+        :text: "Blog"
+      :checkpoints:
+        :blog:
+          :selector:
+            :text: "Blog"
+    :newslettersignup:
+      :selector:
+        :text: "Join our Newsletter"
+      :checkpoints:
+        :blogupdates:
+          :selector:
+            :text: "Blog Updates"
+    :enterprisesalesinfo:
+      :selector:
+        :text: "Enterprise Sales Info"
+      :checkpoints:
+        :tryopenshiftenterprise:
+          :selector:
+            :text: "Try OpenShift Enterprise"
+    :partnerprograms:
+      :selector:
+        :text: "Partner Programs"
+      :checkpoints:
+        :findapartner:
+          :selector:
+            :text: "Find a Partner"
+
