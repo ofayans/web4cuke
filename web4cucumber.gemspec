@@ -15,9 +15,9 @@ Gem::Specification.new do |s|
   s.license       = "GPLv3"
   s.files         = `git ls-files`.split("\n")
   s.require_paths = ["lib"]
-  s.add_dependency = "watir-webdriver"
-  s.add_dependency = "headless"
-  s.add_dependency = "byebug"
+  s.add_runtime_dependency "watir-webdriver", "~> 0.6"
+  s.add_runtime_dependency "headless", "~> 1.0"
+  s.add_runtime_dependency "byebug", "~> 2.7"
   s.add_development_dependency "bundler", "~> 1.6"
-  s.add_development_dependency "rake"
+  s.add_development_dependency "rake", "~> 10.0"
 end
