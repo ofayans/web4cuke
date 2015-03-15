@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   use this library to perform all low-level Watir-webdriver calls"
   s.authors     = ["Oleg Fayans"]
   s.email       = ["ofajans@gmail.com"]
-  s.homepage    = "https://github.com/ofayans/web4cucumber"
+  s.homepage    = "https://github.com/ofayans/web4cuke"
   s.license       = "GPLv3"
   s.files         = `git ls-files`.split("\n")
   s.require_paths = ["lib"]
