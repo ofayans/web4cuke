@@ -5,8 +5,3 @@ Feature: example.feature
   Scenario: Login to Openshift web console
     Given I am logged in to OpenShift web console
     Then the url should contain "app/account"
-    When I run my beautiful action with:
-      |option                |value            |
-      |field_one_on_page_one |some text          |
-      |field_two_on_page_one | some other text|
-      |field_one_on_page_two| lib/files/myfile      |
