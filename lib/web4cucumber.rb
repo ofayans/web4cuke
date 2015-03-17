@@ -484,7 +484,7 @@ class Web4Cucumber
           return @result
         end
       end  
-        return new_cookies
+      return new_cookies
     end 
     if opt == 'delete_all'
       unless @cookies.clear
@@ -515,7 +515,10 @@ class Web4Cucumber
     # elements should be an array of hashes, for example:
     # [{:a=>{:class=>"block"}}, {:a=>{:href=>"/products"}}, {:a=>{:text=>"Log In"}}]
     @counter = 0
-    @result = {:result=>true, :failed_positive_checkpoints => [], :failed_negative_checkpoints => [], :error_messages => []}
+    @result = {:result=>true,
+               :failed_positive_checkpoints => [],
+               :failed_negative_checkpoints => [], 
+               :errors => []}
     elements.each do |element|
       myhash = {
         :a=>@@b.a(element.values[0]),
@@ -535,6 +538,7 @@ class Web4Cucumber
         end
       else
         unless myhash[element.keys[0]].exists?
+          screenshot_save
           @result[:result] = false
           @result[:failed_positive_checkpoints] << element
         end
@@ -542,9 +546,10 @@ class Web4Cucumber
           begin
             myhash[element.keys[0]].click
           rescue => e
+            screenshot_save
             @result[:result] = false
             @result[:failed_positive_checkpoints] << element
-            @result[:error_messages] << e.message
+            @result[:errors] << e.message
           end
         end
       end
@@ -560,15 +565,15 @@ class Web4Cucumber
     result = {
       :result => true,
       :failed_positive_checkpoints => [],
-      :failed_negative_checkpoints => [],
-      :error_messages => []
+      :errors => []
     }
     until @@b.select_list(element_selector).exists? do
       begin
         wait_for_element(element_selector)
       rescue => e
         result[:result] = false
-        result[:error_messages] << e.message
+        result[:failed_positive_checkpoints] << element_selector
+        result[:errors] << e.message
         break
       end
     end
@@ -594,11 +599,59 @@ class Web4Cucumber
   end
 
   def dropdown_value(selector)
-    return @@b.select(selector).value
+    if not element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result => true,
+              :failed_positive_checkpoints => [],
+              :errors => [], 
+              :value => nil}
+    begin
+      result[:value] = @@b.select_list(selector).value
+    rescue => e
+      screenshot_save
+      result[:result] = false
+      result[:failed_positive_checkpoints] << selector
+      result[:errors] << e.message
+    end
+  end
+
+  def select_value(element, value)
+    if not element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result => true, :errors => []}
+    unless @@b.select_list(element).exists?
+      result[:result] = false
+      result[:errors] << "Unable to find element with #{element.keys[0].to_s} #{element.values[0]}" 
+    else
+      begin
+        @@b.select_list(element).select_value(value)
+      rescue => e
+        screenshot_save
+        result[:result] = false
+        result[:errors] << e.message
+      end
+    end
+    return result
   end
 
   def element_text(selector)
-    return @@b.element(selector).text
+    if not element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result => true,
+              :errors => [],
+              :failed_positive_checkpoints => []}
+    begin 
+      result[:text] = @@b.element(selector).text
+    rescue => e
+      screenshot_save
+      result[:result] = false
+      result[:failed_positive_checkpoints] << selector
+      result[:errors] << e.message
+    end
+    return result
   end
 
   def refresh_page
@@ -606,23 +659,35 @@ class Web4Cucumber
   end
 
   def send_keys(element, text)
-    result = {:result=>true}
+    if not element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result=>true,
+              :failed_positive_checkpoints => [],
+              :errors => []
+    }
     begin
       @@b.text_field(element).clear
       @@b.text_field(element).send_keys text
     rescue => e
       result[:result] = false
-      result[:response] = e.message
+      result[:failed_positive_checkpoints] << element
+      result[:errors] << e.message
     end
   end
 
-  def check_textfield_content(selector, text=nil)
-    result = {}
-    if @@b.text_field(selector).exists?
+  def check_textfield_content(selector)
+    result = {:result => true,
+              :failed_positive_checkpoints => [],
+              :errors => []
+    }
+    begin
       result[:text] = @@b.text_field(selector).value
-      result[:result] = true
-    else
+    rescue => e
+      screenshot_save
       result[:result] = false
+      result[:failed_positive_checkpoints] << selector
+      result[:errors] << e.message
     end
     return result
   end

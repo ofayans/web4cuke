@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.license       = "GPLv3"
   s.files         = `git ls-files`.split("\n")
   s.require_paths = ["lib"]
+  s.required_ruby_version = '~> 2.0'
   s.add_runtime_dependency "watir-webdriver", "~> 0.6"
   s.add_runtime_dependency "headless", "~> 1.0"
   s.add_runtime_dependency "byebug", "~> 2.7"
