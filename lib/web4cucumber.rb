@@ -140,10 +140,6 @@ class Web4Cucumber
       # some point to have a human control over the webdriver instance. Then
       # in the same way stick the :debug_at keyword with the page name as a value 
       # into the options hash. The webdriver is available via @@b clas variable
-      if options.has_key?(:debug_at) and options[:stop_at] == page
-        require "byebug"
-        byebug
-      end
       page_rules = rules[page.to_sym]
       unless page_rules
         @@logger.warn("The page #{page} not found in #{key} yaml file, maybe you have wrong yaml format...")
@@ -185,13 +181,14 @@ class Web4Cucumber
         end
         @@b.goto url
       end
-      unless page_rules[:expected_forms]
-        @@logger.warn("No expected_forms defined in the #{page} page")
-      end
       if page_rules.has_key? :sleep
         sleep page_rules[:sleep]
       end
       driver = check_iframe(page_rules) # substitute browser operating with main html 
+      if options.has_key?(:debug_at) and options[:stop_at] == page
+        require "byebug"
+        byebug
+      end
       # with the one operating with internal iframe
       unless page_rules[:expected_fields]
         @@logger.warn("No expected fields in #{page} page")
@@ -270,29 +267,35 @@ class Web4Cucumber
                 end
               end
               if result # continue if nothing failed
-                if prop[:type] == 'select'
-                  if options[name.to_sym]
-                    driver.select_list(prop[:selector]).select_value options[name.to_sym].to_s
-                  elsif prop[:def_value]
-                    driver.select_list(prop[:selector]).select_value prop[:def_value]
-                  else
-                    @@logger.error("Please, provide a value for this element: #{prop}")
-                  end
-                elsif ['filefield', 'file-field', 'file_field'].include? prop[:type]
-                  element.set options[name]
-                elsif ['checkbox', 'radio', 'a', 'element'].include? prop[:type]
-                  element.click
-                elsif ['textfield', 'text_field', 'text_area', 'textarea'].include? prop[:type]
-                  element.clear
-                  if options.has_key? name.to_sym
-                    options[name.to_sym].each_char do |c|
-                      element.append c
+                begin
+                  if prop[:type] == 'select'
+                    if options[name.to_sym]
+                      driver.select_list(prop[:selector]).select_value options[name.to_sym].to_s
+                    elsif prop[:def_value]
+                      driver.select_list(prop[:selector]).select_value prop[:def_value]
+                    else
+                      @@logger.error("Please, provide a value for this element: #{prop}")
                     end
-                  elsif prop.has_key? :def_value
-                    element.send_keys prop[:def_value]
-                  else
-                    @@logger.error("Please provide the value for this element: #{prop}")
+                  elsif ['filefield', 'file-field', 'file_field'].include? prop[:type]
+                    element.set options[name]
+                  elsif ['checkbox', 'radio', 'a', 'element'].include? prop[:type]
+                    element.click
+                  elsif ['textfield', 'text_field', 'text_area', 'textarea'].include? prop[:type]
+                    element.clear
+                    if options.has_key? name.to_sym
+                      options[name.to_sym].each_char do |c|
+                        element.append c
+                      end
+                    elsif prop.has_key? :def_value
+                      element.send_keys prop[:def_value]
+                    else
+                      @@logger.error("Please provide the value for this element: #{prop}")
+                    end
                   end
+                rescue => e
+                  screenshot_save
+                  @result[:result] = false
+                  @result[:errors] << e.message
                 end
               end
             end
