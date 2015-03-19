@@ -136,10 +136,6 @@ class Web4Cucumber
         @result[:errors] << "Execution stopped at page #{page}"
         return @result
       end
-      # sometimes also it is pretty handy to be able to stick the debugger at
-      # some point to have a human control over the webdriver instance. Then
-      # in the same way stick the :debug_at keyword with the page name as a value 
-      # into the options hash. The webdriver is available via @@b clas variable
       page_rules = rules[page.to_sym]
       unless page_rules
         @@logger.warn("The page #{page} not found in #{key} yaml file, maybe you have wrong yaml format...")
@@ -185,6 +181,10 @@ class Web4Cucumber
         sleep page_rules[:sleep]
       end
       driver = check_iframe(page_rules) # substitute browser operating with main html 
+      # sometimes also it is pretty handy to be able to stick the debugger at
+      # some point to have a human control over the webdriver instance. Then
+      # in the same way stick the :debug_at keyword with the page name as a value 
+      # into the options hash. The webdriver is available via @@b clas variable
       if options.has_key?(:debug_at) and options[:stop_at] == page
         require "byebug"
         byebug
@@ -283,14 +283,21 @@ class Web4Cucumber
                   elsif ['textfield', 'text_field', 'text_area', 'textarea'].include? prop[:type]
                     element.clear
                     if options.has_key? name.to_sym
-                      options[name.to_sym].each_char do |c|
-                        element.append c
+                      if options.has_key? :characterwise
+                        options[name.to_sym].each_char do |c|
+                          element.append c
+                        end
+                      else
+                        element.send_keys options[name.to_sym]
                       end
+
                     elsif prop.has_key? :def_value
                       element.send_keys prop[:def_value]
                     else
                       @@logger.error("Please provide the value for this element: #{prop}")
                     end
+                  else
+                    element.click
                   end
                 rescue => e
                   screenshot_save
