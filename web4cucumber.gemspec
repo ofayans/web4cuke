@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Oleg Fayans"]
   s.email       = ["ofajans@gmail.com"]
   s.homepage    = "https://github.com/ofayans/web4cuke"
-  s.license       = "GPLv3"
+  s.license       = "LGPL"
   s.files         = `git ls-files`.split("\n")
   s.require_paths = ["lib"]
   s.required_ruby_version = '~> 2.0'
