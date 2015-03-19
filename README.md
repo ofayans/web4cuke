@@ -1,3 +1,4 @@
+### Introduction
 The main filosophy behind this project is:
 Separate the data from the logic as much as you possibly can. Have you had to
 go through a tremendous ruby module with hundreds of methods which click
@@ -49,10 +50,10 @@ actions to be performed in Web UI of your product in simple yaml-formatted
 files. This approach allows you to separate the application data (html
 properties of page elements) from test logic. 
 
-How to use this? 
+### How to use this? 
 
-- Add `gem 'Web4Cucumber'` to you Gemfile and run `bundle install`
-- In your project in one of your lib/*.rb files add `require "Web4Cucumber"` and inherit your own class from Web4Cucumber one, like this:
+- Add `gem 'web4cucumber'` to you Gemfile and run `bundle install`
+- In your project in one of your lib/*.rb files add `require "web4cucumber"` and inherit your own class from Web4Cucumber one, like this:
 ```
 class Web < Web4Cucumber
   def initialize(options)
@@ -62,7 +63,7 @@ class Web < Web4Cucumber
 end
 ```
 
-- In your features/support/env.rb in Before hook instatiate your beautiful class:
+- In your features/support/env.rb in Before hook instantiate your beautiful class:
 ```
   options = {
     :base_url => "http://base_url_of_your_project",
@@ -70,7 +71,7 @@ end
     :rules_path => "path_to_the_folder_with_your_yaml_files",
     :logger => @logger 
     # You need to pass an object that will do the logging for you. I believe you have it implemented.
-    # If not, please take a look in the examples/testproject folder.
+    # If not, please take a look at the examples/testproject/lib/logger.rb.
   }
   @web = Web.new(options)
 
@@ -179,6 +180,7 @@ pp @result
 ```
 If something went wrong and the webdriver was unable to find some checkpoints or other fields described in the yaml file, then the @result[:result] would be changed to *false* and @result[:failed_positive_checkpoints] array will be populated with the elements that were not found, @result[:failed_negative_checkpoints] - with elements you described in *negative_checkpoints* and @result[:errors] - with exception messages. Also, a *screenshots* folder will be created in your working directory, containing browser screenshot of the page that caught an error.
 
+### Yaml file structure
 Now we have to master yaml file creation in details.
 The structure of yaml files supported by Web4Cucumber library is quite flexible. You could store page descriptions separately from action descriptions, or you could store all your actions in one files, only make sure each action has a precide list of corresponding pages in exactly the same order that they appear during action execution. Besides list of pages only one keyword is supported under an action:
 *final_checkpoints*. This is a list of elements whose presence we expect once the action is finished.
