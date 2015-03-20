@@ -299,7 +299,7 @@ Different elemet types get treated differently by webdriver, textfields can not 
    then in the next step you can explicitly access whatever element you like on
    the third page of your action
 
-3. Similarly, sometimes you need a way to sto the execution and drop into a
+3. Similarly, sometimes you need a way to stop the execution and drop into a
    ruby shell to try some low-level interaction with the webdriver. Well, this
    is easily achieved, just pass 
    ```
