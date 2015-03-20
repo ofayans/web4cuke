@@ -250,3 +250,60 @@ Different elemet types get treated differently by webdriver, textfields can not 
 - filefield - provide a full path to the file you would upload here
 - a  -link
 - element any element that can be simply clicked. No need to provide the type in this case, it will be implied by default.
+
+### Tips and tricks
+
+1. Sometimes a web element may or may not be present on a page depending on the
+   user workflow. Say, depending on whether a user is freshly registered or
+   not, he may be presented with the checkbox to accept license agreement. If
+   you describe this element in the page and it will not be there, an action
+   will fail although it really passes. To make it pass, then, you need to mark
+   an element optional. This is done through *may_absent* keyword, like this:
+   ```
+   expected_fields:
+     field_one:
+       type: textfield
+       selector: 
+         id: 'i-always-exist'
+    field_two:
+      type: checkbox
+      selector:
+        id 'i-am-optional'
+      may_absent: true
+
+   ```
+
+2. Sometimes you need a way to stop the action execution at some point to
+   perform some unusual actions, like clicking "Cancel" button or anything
+   else. This is possible through passing *:stop_at* key with the name of the
+   page as a value in options passed to the *run_action* method. Imagine you
+   have an action that involves accessing three pages and you want to stop at
+   the last page to click some unusual button:
+
+   ```
+   my_beautiful_action:
+     expected_pages:
+       - 'page_one'
+       - 'page_two'
+       - 'page_three'
+   ```
+   Then in you step definition construct the option hash like this:
+   ```
+   options = {
+     :some_field => 'value'
+     :some_other_field => 'other_value'
+     :stop_at => :third_page
+     }
+     @result = @web.run_action(:my_beautiful_action, options)
+   ```
+   then in the next step you can explicitly access whatever element you like on
+   the third page of your action
+
+3. Similarly, sometimes you need a way to sto the execution and drop into a
+   ruby shell to try some low-level interaction with the webdriver. Well, this
+   is easily achieved, just pass 
+   ```
+   :debug_at => :page_three
+   ```
+   in the options and yo will be dropped into a shell right after page three is
+   loaded in the browser window.
