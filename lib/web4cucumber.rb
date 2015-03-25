@@ -185,7 +185,7 @@ class Web4Cucumber
       # some point to have a human control over the webdriver instance. Then
       # in the same way stick the :debug_at keyword with the page name as a value 
       # into the options hash. The webdriver is available via @@b clas variable
-      if options.has_key?(:debug_at) and options[:stop_at] == page
+      if options.has_key?(:debug_at) and options[:debug_at] == page
         require "byebug"
         byebug
       end
@@ -196,6 +196,16 @@ class Web4Cucumber
       if page_rules.has_key? :expected_fields
         page_rules[:expected_fields].each_pair { |name, prop|
           # Beginning of page fields
+          # The following allows you to put <value> as a selector value
+          # :select_item:
+          #   :selector:
+          #     :text: 'Some text <value>'
+          # and then pass the value in options
+          prop[:selector].each do |propkey, propval|
+            if propval.match Regexp.new("<value>")
+              prop[:selector][propkey] = propval.gsub('<value>', options[name])
+            end
+          end          
           possible_elements = {
             # There could be more than one element with the same
             # properties and only one would be visible. As an example:
@@ -362,7 +372,7 @@ class Web4Cucumber
             button.click
           rescue Exception => e
             @result[:result]=false
-            @result[:error_message] = e.message
+            @result[:errors] << e.message
             screenshot_save
           end
         elsif page_rules[:commit].has_key?(:type) and page_rules[:commit][:type] == 'alert'
