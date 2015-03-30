@@ -118,7 +118,10 @@ class Web4Cucumber
   end
 
   def run_action(key, options)
-    @result = {:result=>true, :failed_positive_checkpoints=>[], :failed_negative_checkpoints=>[], :errors => []}
+    @result = {:result=>true,
+               :failed_positive_checkpoints=>[],
+               :failed_negative_checkpoints=>[], 
+               :errors => []}
     @@rules.freeze
     rules = Marshal.load(Marshal.dump(@@rules))
     action_rules = rules[key.to_sym]
@@ -196,16 +199,17 @@ class Web4Cucumber
       if page_rules.has_key? :expected_fields
         page_rules[:expected_fields].each_pair { |name, prop|
           # Beginning of page fields
-          # The following allows you to put <value> as a selector value
+          # You can use anyone of provided options as a part of selector
+          # string. For example
           # :select_item:
           #   :selector:
-          #     :text: 'Some text <value>'
-          # and then pass the value in options
-          prop[:selector].each do |propkey, propval|
-            if propval.match Regexp.new("<value>")
-              prop[:selector][propkey] = propval.gsub('<value>', options[name])
+          #     :text: 'Some text <passme>'
+          # Do not forget to pass :passme key with value in options hash
+          options.keys.each do |optkey|
+            if prop[:selector].values[0].include? "<#{optkey}>"
+              prop[:selector].values[0].gsub!("<#{optkey}>", options[optkey])
             end
-          end          
+          end
           possible_elements = {
             # There could be more than one element with the same
             # properties and only one would be visible. As an example:
@@ -263,7 +267,7 @@ class Web4Cucumber
               end
             end
             if not element
-              if not prop[:may_absent]
+              if not prop[:may_absent] and not page_rules.has_key? :may_absent
                 @result[:result] = false
                 @result[:errors] << "Unable to find element #{name.to_s} by the following #{prop[:selector].keys[0].to_s}: #{prop[:selector].values[0]}"
               end
@@ -371,12 +375,22 @@ class Web4Cucumber
             end
             button.click
           rescue Exception => e
-            @result[:result]=false
-            @result[:errors] << e.message
-            screenshot_save
+            unless page_rules.has_key? :may_absent
+              @result[:result]=false
+              @result[:errors] << e.message
+              screenshot_save
+            end
           end
         elsif page_rules[:commit].has_key?(:type) and page_rules[:commit][:type] == 'alert'
-          @@b.alert.ok
+          begin
+            @@b.alert.ok
+          rescue Exception => e
+            unless page_rules.has_key? :may_absent
+              @result[:result]=false
+              @result[:errors] << e.message
+              screenshot_save
+            end
+          end
         else
           raise "Please provide selector for #{page} page commit"
         end
@@ -418,7 +432,7 @@ class Web4Cucumber
       The initialize method needs to know at least the base_url you want to test against and the :rules_path - path
       to the folder where you store your yaml files with action descriptions. Other keys are optional"
     end
-    if options.keys & obligatory_options == obligatory_options
+    if (options.keys & obligatory_options).sort == obligatory_options.sort
       @@base_url = options[:base_url]
       @@rules_path = options[:rules_path]
       @@logger = options[:logger]
@@ -453,6 +467,7 @@ class Web4Cucumber
       proxy = ENV["http_proxy"].scan(/[\w\.\d\_\-]+\:\d+/)[0] # to get rid of the heading "http://" that breaks the profile
       firefox_profile.proxy = chrome_profile.proxy = Selenium::WebDriver::Proxy.new({:http => proxy, :ssl => proxy})
       firefox_profile['network.proxy.no_proxies_on'] = "localhost, 127.0.0.1"
+      chrome_switches = %w[--proxy-bypass-list=127.0.0.1]
       ENV['no_proxy'] = '127.0.0.1'
     end
     client = Selenium::WebDriver::Remote::Http::Default.new
@@ -460,7 +475,7 @@ class Web4Cucumber
     if browser == :firefox
       @@b = Watir::Browser.new browser, :profile => firefox_profile, :http_client=>client
     elsif browser == :chrome
-      @@b = Watir::Browser.new browser, desired_capabilities: chrome_profile
+      @@b = Watir::Browser.new browser, desired_capabilities: chrome_profile, switches: chrome_switches
     else
       raise "Not implemented yet"
     end
@@ -723,4 +738,25 @@ class Web4Cucumber
   def action_rules(action)
     return @@rules[action.to_sym]
   end
+
+  def checkbox_check(element, negate)
+    result = {:result => true,
+              :failed_positive_checkpoints => [],
+              :errors => []
+    }
+    begin
+      if negate
+        @@b.checkbox(element).clear
+      else
+        @@b.checkbox(element).set
+      end
+    rescue => e
+      result[:result] = false
+      result[:failed_positive_checkpoints] << element
+      result[:errors] << e.message
+    end
+    return result
+  end
+
 end
+
