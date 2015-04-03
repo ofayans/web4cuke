@@ -421,7 +421,7 @@ class Web4Cucumber
 
   def initialize(options)
     # Let's make sure, that we get all necessary options in the proper format
-    obligatory_options = [:base_url, :rules_path, :logger]
+    obligatory_options ||= [:base_url, :rules_path, :logger]
     # :logger should be a Logger class instance with at least the following
     # methods implemented, taking a string as an argument: 
     # - info
@@ -434,7 +434,6 @@ class Web4Cucumber
     end
     if (options.keys & obligatory_options).sort == obligatory_options.sort
       @@base_url = options[:base_url]
-      @@rules_path = options[:rules_path]
       @@logger = options[:logger]
     else
       raise "Please provide #{obligatory_options.join(', ')} in the passed options"
@@ -490,7 +489,7 @@ class Web4Cucumber
       if params[:url].match /^:\d+/ 
         base_url.gsub!(/\/$/, "")
       end
-      @@b.goto base_url + params[:url]
+      @@b.goto @@base_url + params[:url]
     else
       @@b.goto params[:url]
     end
@@ -758,5 +757,64 @@ class Web4Cucumber
     return result
   end
 
-end
+  def textfield_clear(element)
+    result = {
+    :result => true,
+    :errors =>[]}
+    unless element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    # Only textfields are supported
+    begin
+      @@b.text_field(element).clear
+    rescue => e
+      result[:result] = false
+      result[:errors] << e.message
+    end
+  end
 
+  def run_custom(action, options={})
+    if options.has_key? :background
+      fork do
+        run_action(action, options)
+      end
+    else
+      return run_action(action, options)
+    end
+  end
+
+  def typetext(element, text)
+    unless element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result => true,
+              :errors => []
+    }
+    begin
+      @@b.text_field(element).clear
+      @@b.text_field(element).send_keys text
+    rescue => e
+      result[:result] = false
+      result[:errors] << e.message
+    end
+  end
+
+  def value_list(element)
+    if not element.match(/\:\w+\=\>[\'\"]\S+[\"\']/)
+      raise "Please pass the element string in the form :selector=>\"value\""
+    end
+    result = {:result => true,
+              :errors => [],
+              :valuelist => []}
+    unless @@b.select_list(element).exists?
+      screenshot_save
+      result[:result] = false
+      result[:errors] << "Unable to find element with #{element.keys[0].to_s} #{element.values[0]}" 
+    else
+      @@b.select_list(element).options.each do |option|
+        result[:valuelist] << option.value
+      end
+    end
+    return result
+  end
+end
