@@ -144,7 +144,7 @@ second_page:
     selector:
       text: 'Click me too'
 ``` 
-If you take a closer look at this yaml structure, you'll notice that it describes describes two web pages pages. The first one is accessed through relative url "/some_relative_path/testme" that is being appended to your project's base_url (used during Web initialization).
+If you take a closer look at this yaml structure, you'll notice that it describes two web pages. The first one is accessed through relative url "/some_relative_path/testme" that is being appended to your project's base_url (used during Web initialization).
 The second page is accessed by clicking the "Click me" button on the first page. The yaml file describes 2 textfields on first page and one textfield and one filefield on the second page. It also describes checkpoints - elements whose presence will be asserted during the action execution. We can provide default values for textfields right inside the yaml with the *def_value* keyword. Now the most interesting question: how do we use that?
 
 - The whole workflow would look like this. You would create your step:
