@@ -25,6 +25,7 @@ class Web4Cucumber
           value[:selector].each_pair do |how, what|
             options.keys.each do |optkey|
               if what.match Regexp.new("<#{optkey.to_s}>")
+                # TODO: make sure this does not alter global page rules
                 what.gsub!("<#{optkey.to_s}>", options[optkey])
               end
             end
@@ -71,6 +72,7 @@ class Web4Cucumber
         value[:selector].each_pair do |how, what|
           options.keys.each do |optkey|
             if what.match Regexp.new("<#{optkey.to_s}>")
+              # TODO: make sure this does not alter global page rules
               what.gsub!("<#{optkey.to_s}>", options[optkey])
             end
           end
@@ -96,7 +98,6 @@ class Web4Cucumber
     }
   end
 
-  
   def check_iframe(page_rules)
     if page_rules.has_key? :iframe
       return @@b.iframe(page_rules[:iframe][:selector])
@@ -117,11 +118,74 @@ class Web4Cucumber
     @counter += 1
   end
 
+  def find_elements(type, selector)
+    type = type.to_sym
+
+    possible_elements = {
+      :select => :select_lists,
+      :checkbox => :checkboxes,
+      :radio => :radios,
+      :text_field => :text_fields,
+      :textfield => :text_fields,
+      :text_area => :textareas,
+      :textarea => :textareas,
+      :filefield => :file_fields,
+      :file_field => :file_fields,
+      :a => :as,
+      :button => :button,
+      :element => :elements
+    }
+
+    raise "unknown type #{type}" unless possible_elements.keys.include? type
+
+    # note that this is lazily evaluated so errors may occur later
+    res = driver.public_send(possible_elements[type],selector)
+
+    # we want to always return an array
+    if res.nil?
+      @@logger.info("found none #{type} elements with selector #{selector}")
+      return []
+    elsif res.kind_of? Watir::ElementCollection
+      @@logger.info("found #{res.size} #{type} elements with selector #{selector}")
+      return res.to_a
+    else
+      @@logger.info("found #{type} element with selector #{selector}")
+      return [res]
+    end
+  end
+
+  def find_visible_elements(type, selector)
+    return find_elements(type, selector).select { |e| e.visible? }
+  end
+
+  # @return [status, [[[elements], type, selector], ..] ]
+  def wait_for_elements(opts)
+    elements = opts[:list] || [[ opts[:type], opts[:selector] ]]
+    only_visible = opts.has_key?(:visible) ? opts[:visible] : true
+    timeout = opts[:timeout] || 20 # in seconds
+
+    start = Time.now
+    result = nil
+    begin
+      sleep 1
+      result = {:list => [], :success => true}
+      break if elements.all? { |type, selector|
+        e = only_visible ? find_visible_elements(type, selector) :
+          find_elements(type, selector)
+        result[:list] << [e, opts[:type], opts[:selector]] unless e.empty?
+      }
+      result[:success] = false
+    end until Time.now - start > timeout
+
+    return result[:success], result[:list]
+  end
+
   def run_action(key, options)
     @result = {:result=>true,
                :failed_positive_checkpoints=>[],
-               :failed_negative_checkpoints=>[], 
+               :failed_negative_checkpoints=>[],
                :errors => []}
+    # TODO: can we do a deep freeze here?
     @@rules.freeze
     rules = Marshal.load(Marshal.dump(@@rules))
     action_rules = rules[key.to_sym]
@@ -146,12 +210,14 @@ class Web4Cucumber
       if page_rules.has_key? :url
         options.keys.each do |key|
           if page_rules[:url].match Regexp.new("<#{key.to_s}>")
+            # TODO: make sure this does not alter global page rules
             page_rules[:url].gsub!("<#{key.to_s}>", options[key])
           end
         end
       elsif page_rules.has_key? :base_url
         options.keys.each do |key|
           if page_rules[:base_url].match Regexp.new("<#{key.to_s}>")
+            # TODO: make sure this does not alter global page rules
             page_rules[:base_url].gsub!("<#{key.to_s}>", options[key])
           end
         end
@@ -170,8 +236,10 @@ class Web4Cucumber
         end
         if page_rules[:url].match /^\:\d+/
           if url.match /\:\d+/
+            # TODO: make sure this does not alter global page rules
             url.gsub!(/\:\d+\//, "")
           else
+            # TODO: make sure this does not alter global page rules
             url.gsub!(/\/$/, "")
           end
         end
@@ -183,10 +251,10 @@ class Web4Cucumber
       if page_rules.has_key? :sleep
         sleep page_rules[:sleep]
       end
-      driver = check_iframe(page_rules) # substitute browser operating with main html 
+      set_driver(page_rules) # substitute browser operating with main html
       # sometimes also it is pretty handy to be able to stick the debugger at
-      # some point to have a human control over the webdriver instance. Then
-      # in the same way stick the :debug_at keyword with the page name as a value 
+      # some point to have a human control over the webdriver instance. Then in
+      # the same way stick the :debug_at keyword with the page name as a value
       # into the options hash. The webdriver is available via @@b clas variable
       if options.has_key?(:debug_at) and options[:debug_at] == page
         require "byebug"
@@ -205,29 +273,9 @@ class Web4Cucumber
           #   :selector:
           #     :text: 'Some text <passme>'
           # Do not forget to pass :passme key with value in options hash
-          options.keys.each do |optkey|
-            if prop[:selector].values[0].include? "<#{optkey}>"
-              prop[:selector].values[0].gsub!("<#{optkey}>", options[optkey])
-            end
-          end
-          possible_elements = {
-            # There could be more than one element with the same
-            # properties and only one would be visible. As an example:
-            # try adding more than one member to the same domain
-            'select' => driver.select_lists(prop[:selector]),
-            'checkbox' => driver.checkboxes(prop[:selector]),
-            'radio' => driver.radios(prop[:selector]),
-            'text_field' => driver.text_fields(prop[:selector]),
-            'textfield' => driver.text_fields(prop[:selector]),
-            'text_area' => driver.textareas(prop[:selector]),
-            'textarea' => driver.textareas(prop[:selector]),
-            'filefield' => driver.file_fields(prop[:selector]),
-            'file_field' => driver.file_fields(prop[:selector]),
-            'a' => driver.as(prop[:selector]),
-            'element' => driver.elements(prop[:selector]) 
-          }
-          if prop.has_key?(:type) and not possible_elements.keys.include? prop[:type]
-            @@logger.error("Unsupported element #{prop[:type]} for cucushift, so type error?")
+          options.each do |opt_key, opt_value|
+            # TODO: this likely alters rules so we need to dup first
+            prop[:selector].values[0].gsub!("<#{opt_key}>", opt_value)
           end
           result ||= true
           @counter = 0
@@ -242,20 +290,15 @@ class Web4Cucumber
             end
           end
           options.each do |key,value|
-            if value.is_a? String and prop[:selector].values[0].match Regexp.new("<#{key.to_s}>")
-              prop[:selector].values[0].gsub!("<#{key.to_s}>", options[key])
-            end
-          end
-          elements = possible_elements[prop[:type]]
-          element = nil
-          elements.each do |elem|
-            if elem.visible?
-              element = elem
+            if value.is_a? String
+              # TODO: make sure this does not alter global page rules
+              prop[:selector].values[0].gsub!("<#{key.to_s}>", value)
             end
           end
           if (options.has_key? name and options[name]) or prop.has_key? :def_value
             options.keys.each do |key|
               if prop[:selector].values[0].match Regexp.new("<#{key.to_s}>")
+                # TODO: make sure this does not alter global page rules
                 prop[:selector].values[0].gsub!("<#{key.to_s}>", options[key])
               end
             end
@@ -266,20 +309,22 @@ class Web4Cucumber
                 prop[:selector][key] = options[name.to_sym]
               end
             end
-            if not element
+            found, elements = wait_for_elements( :type => prop[:type],
+                                         :selector => prop[:selector],
+                                         :visible => true
+                                              )
+            if ! found
               if not prop[:may_absent] and not page_rules.has_key? :may_absent
+                screenshot_save
+                @result[:failed_positive_checkpoints] << prop[:selector]
                 @result[:result] = false
                 @result[:errors] << "Unable to find element #{name.to_s} by the following #{prop[:selector].keys[0].to_s}: #{prop[:selector].values[0]}"
+                # historically we avoided raising on missing element
+                # we may revisit that here
               end
             else
-              until element.exists? do
-                begin
-                  wait_for_element(prop[:selector], prop[:may_absent])
-                rescue Exception => e
-                  result = false
-                  break
-                end
-              end
+              # first element searched for, first field [the actual element list], last found element [this must be most inner element]
+              element = elements.first.first.last
               if result # continue if nothing failed
                 begin
                   if prop[:type] == 'select'
@@ -350,6 +395,7 @@ class Web4Cucumber
         if page_rules[:commit].has_key?(:selector)
           options.keys.each do |optkey|
             if page_rules[:commit][:selector].values[0].include? "<#{optkey}>"
+              # TODO: make sure this does not alter global page rules
               page_rules[:commit][:selector].values[0].gsub!("<#{optkey}>", options[optkey])
             end
           end
@@ -482,11 +528,21 @@ class Web4Cucumber
     @@b.goto @@base_url
   end
 
+  # @return current driver
+  # @note that is usually the browser we have but can be an iframe if set_driver was called
+  def driver
+    return @current_driver || @@b
+  end
+
+  def set_driver(page_rules)
+    @current_driver = check_iframe(page_rules)
+  end
+
   def goto(params) # params should be a hash
     if params[:relative]
       # if provided relative url and current url contain port nuumbers - take
       # the explicitly provided one
-      if params[:url].match /^:\d+/ 
+      if params[:url].match /^:\d+/
         base_url.gsub!(/\/$/, "")
       end
       @@b.goto @@base_url + params[:url]
@@ -499,15 +555,15 @@ class Web4Cucumber
   def get_url
     return @@b.url
   end
-    
+
   def cookie_option(cookies,opt = nil)
     @result = {:result => true, :failed_positive_checkpoints => nil,:message => nil}
     @cookies= @@b.cookies
-    if opt == 'show'  
+    if opt == 'show'
       return @cookies.to_a
     end
     if opt == 'select'
-      new_cookies = []        
+      new_cookies = []
       cookies.each do |cookie|
         if @cookies[cookie[:name].to_sym]
           cookie[:value] = @cookies[cookie[:name].to_sym][:value]
@@ -517,9 +573,9 @@ class Web4Cucumber
           @result[:falied_negative_checkpoints] =[cookie]
           return @result
         end
-      end  
+      end
       return new_cookies
-    end 
+    end
     if opt == 'delete_all'
       unless @cookies.clear
         @result[:result]=false
@@ -528,7 +584,7 @@ class Web4Cucumber
     end
     cookies.each do |cookie|
       if opt == 'add'
-        if @cookies.add cookie[:name],cookie[:value]      
+        if @cookies.add cookie[:name],cookie[:value]
           @result[:result]=true
         else
           @result[:result]=false
@@ -541,9 +597,9 @@ class Web4Cucumber
           @result[:falied_negative_checkpoints] = [cookie]
         end
       end
-    end               
-    return @result    
-  end 
+    end
+    return @result
+  end
 
   def check_elements(elements, negate=nil, click=nil)
     # elements should be an array of hashes, for example:

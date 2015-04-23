@@ -307,3 +307,14 @@ Different elemet types get treated differently by webdriver, textfields can not 
    ```
    in the options and yo will be dropped into a shell right after page three is
    loaded in the browser window.
+
+4. Sometimes, a commit button is situated far below under the long multi-field
+form, outside the browser viewport and therefore can not be interacted with.
+Use keyword *scroll* for such commits:
+```
+:commit:
+  :scroll: true
+  :type: a
+  :selector:
+    :text: "Submit"
+```
